@@ -1,0 +1,63 @@
+@import url(./_fonts.scss);
+*{
+    box-sizing: border-box;
+}
+html, body{
+    display: flex;
+    flex-direction: column;
+    font-family: 'SFProText';
+}
+html {
+    height:100vh;
+    overflow: hidden;
+}
+body {
+    margin: 0;
+    height: 100%;
+}
+h1,h2,h3,h4,h5,h6 {
+    margin: 0;
+    padding: 0;
+}
+#app{
+    height: 100%;
+}
+.page{
+    height: 100%;
+    padding: 60px 30px 0 30px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    &__inner{
+        height: 100%;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    &__header{
+        margin-bottom: 60px;
+    }
+    &__title{
+        font-weight: 700;
+        font-size: 34px;
+        line-height: 130%;
+    }
+    &__body{
+        height: 100%;
+    }
+}
+.block{
+    &__title{
+        margin-bottom: 16px;
+        font-weight: 700;
+        font-size: 26px;
+        line-height: 130%;
+    }
+    &__body{
+        display: flex;
+        gap: 10px;
+    }
+}
+.n-dialog.n-dialog--icon-left .n-dialog__icon{
+    display: none;
+}
