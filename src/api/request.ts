@@ -22,7 +22,7 @@ axios.interceptors.response.use((response) => {
 
 export const request = (params: any) => {
     return axios({
-        baseURL: 'http://sduback1.pythonanywhere.com/',
+        baseURL: 'https://sduback1.pythonanywhere.com/',
         ...params
     })
 }
