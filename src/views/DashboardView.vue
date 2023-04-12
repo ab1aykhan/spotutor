@@ -1,8 +1,10 @@
 <template>
   <div class="page">
     <div class="page__inner">
-      <div class="page__title">
-        Dashboard
+      <div class="page__header">
+        <div class="page__title">
+          Dashboard
+        </div>
       </div>
       <div class="page__body">
         <loader v-if="loader" />
@@ -11,7 +13,7 @@
           class="dashboard"
         >
           <div class="dashboard__projects">
-            <div class="task-info">
+            <div class="task-info dashboard__task-info">
               <div
                 class="task-info__item"
               >
@@ -29,33 +31,38 @@
                 />
               </div>
             </div>
-            <!-- <div class="task-statuses">
-              task-statuses
-            </div> -->
+
+            <div class="task-hint dashboard__task-hint">
+              <task-type-hint class="task-hint__item" :task="{ type: 'proposed_tasks', count: dashboard.proposed_tasks }"/>
+              <task-type-hint class="task-hint__item" :task="{ type: 'in_progress_tasks', count: dashboard.in_progress_tasks }"/>
+              <task-type-hint class="task-hint__item" :task="{ type: 'complete_tasks', count: dashboard.complete_tasks }"/>
+            </div>
 
             <div
-              class="project"
+              class="project dashboard__project"
             >
               <div class="project__title">
                 My projects
               </div>
-              <template v-if="dashboard.projects.length">
-                <div
-                  v-for="(i, index) in dashboard.projects"
-                  :key="index"
-                  class="project__card-list"
-                >
-                  <project-card :project="i" />
-                </div>
-              </template>
-              <template v-else>
-                No projects
-              </template>
+              <div class="project__list">
+                <template v-if="dashboard.projects.length">
+                  <div
+                    v-for="(i, index) in dashboard.projects"
+                    :key="index"
+                    style="max-width: 358px; width:100%"
+                  >
+                    <project-card :project="i" @click="toProject(i)" />
+                  </div>
+                </template>
+                <template v-else>
+                  No projects
+                </template>
+              </div>
             </div>
 
             <div
-              v-if="dashboard.supervisor"
-              class="project"
+              v-if="dashboard.is_supervisor"
+              class="project project__students"
             >
               <div class="project__title">
                 Students
@@ -74,21 +81,26 @@
 <script lang="ts">
 import { computed, defineComponent, onBeforeMount, ref } from 'vue'
 import { useStore } from 'vuex';
+import { useRouter } from 'vue-router';
 
 import Card from '@/components/Card.vue'
 import ProjectCard from '@/components/ProjectCard.vue';
 import UserCardList from '@/components/UserCardList.vue';
 import Loader from '@/components/UI/Loader.vue';
+import TaskTypeHint from '@/components/TaskTypeHint.vue';
 
 export default defineComponent({
 	components: {
 		Card,
 		ProjectCard,
 		UserCardList,
-		Loader
+		Loader,
+    TaskTypeHint
 	},
 	setup() {
-		const store = useStore()
+		const store = useStore();
+		const router = useRouter();
+
 		const loader = ref(true)
 		const taskInfo = ref([
 			{
@@ -102,7 +114,14 @@ export default defineComponent({
 				iconName: 'total'
 			}
 		]);
-		const dashboard = computed(()=> store.getters.dashboard)
+    const  dashboard = ref({
+      projects:[],
+      is_supervisor: false,
+      total_tasks: '',
+      in_progress_tasks: '',
+      proposed_tasks: 0,
+      complete_tasks: 0
+    });
 
 		const projects = ref([
 			{
@@ -119,18 +138,30 @@ export default defineComponent({
 		]);
 
 
-		onBeforeMount(()=> {
+		const toProject = (item: any) => {
+      router.push({name: 'tasks', query: item })
+		}
+
+    const fetchDashboard = () => {
 			loader.value = true;
-			store.dispatch('dashboard').finally(()=>{
+			store.dispatch('dashboard')
+      .then((res)=> {
+        dashboard.value = res[0];
+      }).finally(()=>{
 				loader.value = false;
 			})
+    }
+
+		onBeforeMount(()=> {
+      fetchDashboard();
 		})
 
 		return {
 			taskInfo,
 			students,
 			dashboard,
-			loader
+			loader,
+			toProject
 		}
 	},
 })
@@ -139,7 +170,13 @@ export default defineComponent({
 
 
 <style lang="scss" scoped>
+.dashboard{
+  &__task-hint {
+    margin-bottom: 40px;
+  }
+}
 .project{
+  width: 100%;
   &__title{
     font-weight: 700;
     font-size: 26px;
@@ -147,6 +184,17 @@ export default defineComponent({
   }
   &__card-list{
     padding-top: 16px;
+    width: 100%;
+
+  }
+  &__list{
+    width: 100%;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  &__students{
+    margin-top: 40px;
   }
 }
 
@@ -155,5 +203,15 @@ export default defineComponent({
   flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 30px;
+}
+.task-hint{
+  display: flex;
+  &__item{
+    padding: 0 20px;
+    border-right: 1px solid #EBF0FF;
+  }
+  &__item:last-child{
+    border: none;
+  }
 }
 </style>

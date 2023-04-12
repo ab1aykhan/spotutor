@@ -19,7 +19,8 @@ export default createStore({
 				label: 'low',
 				value: '3'
 			}
-		]
+		],
+		currentTask: {}
 	},
 	getters: {
 		profile: (state) => state.profile[0],
@@ -27,6 +28,7 @@ export default createStore({
 		myProjects: (state) => state.myProjects,
 		priority: (state) => state.priority,
 		dashboard: (state) => state.dashboard[0],
+		currentTask: (state) => state.currentTask
 	},
 	mutations: {
 		SET_PROFILE (state, payload) {
@@ -40,6 +42,9 @@ export default createStore({
 		},
 		SET_DASHBOARD (state, payload) {
 			state.dashboard = payload
+		},
+		SET_CURRENTTASK (state, payload) {
+			state.currentTask = payload
 		}
 	},
 	actions: {
@@ -63,10 +68,13 @@ export default createStore({
 				})
 		},
 
-		async dashboard ({ commit }) {
-			const { data } = await request({ method: 'get', url: 'dashboard/' });
-			commit('SET_DASHBOARD', data);
-			return data;
+		dashboard ({ commit }) {
+			return request({ method: 'get', url: 'dashboard/' })
+			.then((res) => {
+				const { data } = res;
+				commit('SET_DASHBOARD', data[0]);
+				return data;
+			})
 		},
 		editProfile ({ commit }, data) {
 			return request({ method: 'post', url: 'profile/edit_profile/', data})
@@ -76,8 +84,41 @@ export default createStore({
 		},
 
 		createProject ({ commit }, data) {
-			request({ method: 'post', url: 'projects/', data}, )
-		}
+			return request({ method: 'post', url: 'projects/', data}).then((res)=> {
+				return res
+			})
+		},
+
+		changePassword ({ commit }, data) {
+			return request({ method: 'post', url: 'profile/change_password/', data})
+		},
+
+		getCourseOfSupervisor ({ commit }, id) {
+			return request({ method: 'get', url: `courses/`})
+
+		},
+
+		getTaskDetails ({ commit }, id) {
+			request({ method: 'get', url: `tasks/details/${id}`})
+
+		},
+
+		createSubtask ({ commit }, data) {
+			request({ method: 'post', url: 'subtasks/', data})
+		},
+
+		getSubtaskByTaskID ({ commit }, id) {
+			request({ method: 'get', url: `tasks/details/`, params: {
+				task_id: id
+			}}).then((res)=>{
+				console.log(res);
+				
+			})
+		},
+		getStudentsOfLoggedInSupervisor() {
+			return request({ method: 'get', url: 'supervisor/'})
+
+		},
 	},
 	modules: {
 	}

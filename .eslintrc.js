@@ -1,25 +1,47 @@
 module.exports = {
 	root: true,
 	env: {
-		browser: true,
-		node: true,
+	  node: true,
+	},
+	parser: "vue-eslint-parser",
+	parserOptions: {
+	  parser: "@typescript-eslint/parser",
+	  ecmaVersion: 2020,
+	  sourceType: "module",
 	},
 	extends: [
-		// add more generic rulesets here, such as:
-		'eslint:recommended',
-		'plugin:vue/vue3-recommended',
-		// 'plugin:vue/recommended' // Use this if you are using Vue.js 2.x.
+	  "plugin:@typescript-eslint/recommended",
+	  "eslint:recommended",
+	  "prettier/@typescript-eslint",
+	  "plugin:prettier/recommended",
+	  "plugin:vue/vue3-recommended",
+	  "plugin:vue/recommended",
+	  "prettier/vue",
 	],
+	plugins: ["prettier", "@typescript-eslint"],
 	rules: {
-		// override/add rules settings here, such as:
-		// 'vue/no-unused-vars': 'error'
-		"indent": ["error", "tab"],
-		"vue/multi-word-component-names": "off"
+	  "no-unused-vars": "off",
+	  "@typescript-eslint/no-unused-vars-experimental": "error",
+	  "vue/valid-attribute-name": "off",
+	  "vue/no-parsing-error": ["off", {
+		"unexpected-character-in-attribute-name": false,
+		"unexpected-character-in-unquoted-attribute-value": false,
+	  }],
+	  "vue/html-indent": ["error", type, {
+		"attribute": 1,
+		"baseIndent": 1,
+		"closeBracket": 0,
+		"alignAttributesVertically": true,
+		"ignores": []
+	  }],
+	  "vue/max-attributes-per-line": ["error", {
+		"singleline": {
+		  "max": 1
+		},      
+		"multiline": {
+		  "max": 1
+		}
+	  }]
 	},
-	"parser": "vue-eslint-parser",
-	"parserOptions": {
-		// Required for certain syntax usages
-		"ecmaVersion": 2020,
-		
-	},
-}
+	"ignorePatterns": ["dist"],
+}   

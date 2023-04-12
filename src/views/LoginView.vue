@@ -38,7 +38,14 @@
               type="primary" 
               style="width: 100%"
               @click="login"
+              :disabled="disableBtn"
+              :loading="loading"
             >
+              <template #icon>
+                <n-icon>
+                  <cash-icon />
+                </n-icon>
+              </template>
               Sign In
             </n-button>
           </div>
@@ -59,8 +66,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onBeforeMount, ref } from 'vue'
+import { computed, defineComponent, onBeforeMount, ref } from 'vue'
 import { useRouter } from 'vue-router';
+import { CashOutline as CashIcon } from '@vicons/ionicons5'
 
 import Banner from '@/components/Banner.vue'
 import { 
@@ -75,18 +83,25 @@ export default defineComponent({
 		NSpace,
 		NButton,
 		NInput,
-		Banner
+		Banner,
+    CashIcon
 	},
 	setup() {
 		const router = useRouter();
+
 
 		const loginForm = ref({
 			username: '',
 			password: ''
 		});
 
+    const disableBtn = computed(()=> !(loginForm.value.username.length >= 6 && loginForm.value.password.length >= 6))
+
+    const loading = ref(false);
+
 		const login = async () => {
 			if (loginForm.value.password && loginForm.value.username) {
+        loading.value = true;
 				await request({
 					method: 'post',
 					url: 'login/',
@@ -96,7 +111,9 @@ export default defineComponent({
 				}).then(({ data }) => {
 					localStorage.setItem('token', data.access);
 					router.push({ name: 'main'});
-				})
+				}).finally(()=> {
+          loading.value = false;
+        })
 			}
 		}
 
@@ -106,7 +123,9 @@ export default defineComponent({
 		return {
 			loginForm,
 			toMain,
-			login
+			login,
+      disableBtn,
+      loading
 		}
 	},
 })

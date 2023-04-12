@@ -29,7 +29,7 @@ export default defineComponent({
 			required: true
 		},
 		description: {
-			type: String,
+			type: [String, Number],
 			required: true
 		},
 		iconName: {

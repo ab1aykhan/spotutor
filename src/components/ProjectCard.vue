@@ -2,6 +2,7 @@
   <n-card
     class="project-card"
     hoverable
+    content-style="max-width: 358px; width:100%"
   >
     <div class="project-card__title">
       {{ project.title }}
@@ -15,12 +16,12 @@
         Task Done: {{ project.complete_tasks }} / {{ project.total_tasks }}
       </div>
       <div class="task-progress__line">
-        <!-- <n-progress
+        <n-progress
           type="line"
           :show-indicator="false"
           status="success"
-          :percentage="20"
-        /> -->
+          :percentage="percentage"
+        />
       </div>
     </div>
 
@@ -29,31 +30,15 @@
         <div class="user-card__name">
           Participants
         </div>
-        <div
-          v-for="i in project.participants"
-          :key="i"
-          class="user-card__avatar"
-        >
-          <n-avatar
-            round
-            size="medium"
-            src="https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg"
-          />
+        <div class="user-card__list">
+          <div
+            v-for="i in project.participants"
+            :key="i"
+          >
+            <user-card-mini :user="i" />
+          </div>
         </div>
       </div>
-
-      <!-- <div class="user-card">
-        <div class="user-card__name">
-          Students
-        </div>
-        <div class="user-card__avatar">
-          <n-avatar
-            round
-            size="medium"
-            src="https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg"
-          />
-        </div>
-      </div> -->
     </div>
 
     <div class="project-card__info">
@@ -66,29 +51,32 @@
             />
           </div>
           <div class="project-date__text">
-            {{ project.deadline }}
+            {{ date(project.deadline) }}
           </div>
         </div>
       </div>
 
       <div class="priority">
-        {{ project.priority }}
+        <priority :code="project.priority"/>
       </div>
     </div>
   </n-card>
 </template>
 <script lang="ts">
 
-import { NCard, NProgress, NAvatar } from 'naive-ui';
-import { defineComponent } from 'vue'
+import { NCard, NProgress } from 'naive-ui';
+import { computed, defineComponent } from 'vue'
 import Calendar from '@/assets/icons/Calendar.vue';
+import UserCardMini from './UserCardMini.vue';
+import Priority from './Priority.vue';
 
 export default defineComponent({
 	components: {
 		NCard,
-		NProgress,
-		NAvatar,
-		Calendar
+		Calendar,
+		UserCardMini,
+    NProgress,
+    Priority
 	},
 	props: {
 		project: {
@@ -111,40 +99,52 @@ export default defineComponent({
 			default: 'Subtitle'
 		}
 	},
-	setup() {
-        
+	setup(props) {
+    const date = (date: string) => {
+      const newDate = new Date(date);
+      const day = newDate.getDate();
+      const month = newDate .toLocaleString('default', { month: 'long' });
+      const year = newDate.getFullYear();
+      return `${month} ${day}, ${year}`;
+    }
+
+    const percentage = computed(()=> (props.project.complete_tasks / props.project.total_tasks) * 100) || 0;
+
+    return {
+      date,
+      percentage
+    }
 	},
 })
 </script>
 <style lang="scss" scoped>
-.n-card {
-  max-width: 358px;
-}
 .project-card{
-    &__title{
-        font-weight: 700;
-        font-size: 16px;
-        line-height: 130%;
-        margin-bottom: 8px;
-    }
-    &__subtitle{
-        font-weight: 400;
-        font-size: 14px;
-        line-height: 130%;
-        color: #9098B1;
-        margin-bottom: 24px;
-    }
-    &__members{
-        display: flex;
-        margin-bottom: 16px ;
-    }
-    &__task-progress{
-        margin-bottom: 25px;
-    }
-    &__info{
-        display: flex;
-        justify-content: space-between;
-    }
+  width: 100%;
+  cursor: pointer;
+  &__title{
+      font-weight: 700;
+      font-size: 16px;
+      line-height: 130%;
+      margin-bottom: 8px;
+  }
+  &__subtitle{
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 130%;
+      color: #9098B1;
+      margin-bottom: 24px;
+  }
+  &__members{
+      display: flex;
+      margin-bottom: 16px ;
+  }
+  &__task-progress{
+      margin-bottom: 25px;
+  }
+  &__info{
+      display: flex;
+      justify-content: space-between;
+  }
 }
 .task-progress{
     &__title{
@@ -162,6 +162,10 @@ export default defineComponent({
         font-size: 12px;
         line-height: 130%;
         margin-bottom: 5px;
+    }
+    &__list{
+      display: flex;
+      
     }
     &:last-child{
         margin-right: 0;

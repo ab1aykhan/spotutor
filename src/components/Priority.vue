@@ -1,11 +1,11 @@
 <template>
-  <div :class="[`priority priority--${type}`]">
-    {{ text }}
+  <div :class="[`priority priority--${priority.type}`]">
+    {{ priority.text }}
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
+import { computed, defineComponent, ref } from 'vue'
 
 export default defineComponent({
 	props: {
@@ -16,13 +16,44 @@ export default defineComponent({
 		type: {
 			type: String,
 			default: 'high'
-		}
+		},
+    code: {
+      type: Number,
+    }
 	},  
 	setup(props) {
 		const a = ref({})
 
+    const priority = computed(()=> {
+      const code = props.code
+      if (code) {
+        switch(code){
+          case 1 : 
+            return {
+              type: 'high',
+              text: 'high priority'
+            }
+          case 2 : 
+            return {
+              type: 'medium',
+              text: 'medium priority'
+            }
+          case 3 : 
+            return {
+              type: 'low',
+              text: 'low priority'
+            }
+        }
+      }
+      return {
+        type: props.type,
+        text: props.text
+      }
+    })
 
-		return a;
+		return {
+      priority
+    };
 	},
 })
 </script>
@@ -34,7 +65,7 @@ export default defineComponent({
     border-radius: 4px;
     padding: 6px 12px;
     text-transform: uppercase;
-    max-width: 106px;
+    min-width: 106px;
     height: 30px;
     text-align: center;
     &--medium{

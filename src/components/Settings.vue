@@ -10,17 +10,27 @@
         >
           <n-tab-pane name="edit-profile" tab="Edit profile">
             <user-card style="margin-bottom: 22px" :user="usercard"/>
-
-            <n-button 
-                quaternary
-                style="color: #5BB1F9; 
-                       font-weight: 600;
-                       margin-bottom: 32px"
-                :render-icon="renderIcon"
+            <n-upload
+                @beforeUpload="handleAvatar"
+                :headers="{
+                'naive-info': 'hello!'
+                }"
+                :data="{
+                  'naive-data': 'cool! naive!'
+                }"
+                :action="profile.picture_url"
+                :file-list-style="{display: 'none'}"
             >
-                Change photo
-            </n-button> 
-            
+                <n-button 
+                    quaternary
+                    style="color: #5BB1F9; 
+                           font-weight: 600;
+                           margin-bottom: 32px"
+                    :render-icon="renderIcon"
+                >
+                    Change photo
+                </n-button> 
+            </n-upload>
             <n-form>
                 <n-form-item :show-label="showLabel">
                     <n-input 
@@ -44,7 +54,7 @@
                         size="large" 
                         placeholder="Birth Date"
                         style="width:100%"
-                        value-format="yyyy-MM-dd HH:mm:ss"
+                        value-format="yyyy-MM-dd"
                         v-model:formatted-value="profile.birth_date"
                         :disabled="loading"
 
@@ -102,6 +112,7 @@
                         size="large" 
                         type="password"
                         show-password-on="mousedown"
+                        v-model:value="password.old_password"
 
                     />
                 </n-form-item>
@@ -110,6 +121,7 @@
                         size="large" 
                         type="password"
                         show-password-on="mousedown"
+                        v-model:value="password.new_password1"
 
                     />
                 </n-form-item>
@@ -118,12 +130,14 @@
                         size="large" 
                         type="password"
                         show-password-on="mousedown"
+                        v-model:value="password.new_password2"
 
                     />
                 </n-form-item>
                 <n-form-item :show-label="showLabel">
                     <n-button 
                         type="primary"
+                        @click="changePassword"
                     >
                             Save changes
                     </n-button>
@@ -142,7 +156,6 @@ import UserCard from './UserCard.vue';
 
 import EmailIcon from '@/assets/icons/Email.vue'
 import pencilIcon from '@/assets/icons/pencil.vue'
-
 import { h } from 'vue'
 import { 
     NCard, 
@@ -158,9 +171,14 @@ import {
     NDatePicker,
     NSelect,
     NIcon,
-    NAvatar
+    NAvatar,
+    useMessage,
+    NUpload,
+    UploadFileInfo
 } from 'naive-ui'
 import { useStore } from 'vuex';
+import { request } from '@/api/request';
+import axios from 'axios';
 
 
 export default defineComponent({
@@ -196,19 +214,27 @@ export default defineComponent({
         NDatePicker,
         NSelect,
         NIcon,
-        NAvatar
+        NAvatar,
+        NUpload
     },
     setup(props) {
         const showLabel: boolean = false
-        const store = useStore()
+        const store = useStore();
         let loading = ref(false);        
-        let profile: any = ref({})
-        let usercard: any = ref({})
+        let profile: any = ref({});
+        let usercard: any = ref({});
+        const message = useMessage();
 
         const renderIcon = () => {
             return h(pencilIcon)
         }
         const currentLang = ref('RU')
+
+        const password = ref({
+            old_password: '',
+            new_password1: '',
+            new_password2: ''
+        })
 
         const languageOption = [
                 {
@@ -221,6 +247,31 @@ export default defineComponent({
                 },
         ]
 
+        const handleAvatar = (data: { file: any }) => {
+            const file = data.file;
+            console.log(file);
+            let formData = new FormData();
+            if (file) {
+                const blob = new Blob([file.file], { type: file.type })
+                formData.append(file.name, blob);
+                const data = { file: formData}
+                request({ method: 'post', url: 'profile/upload_image/', data, 
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                    }
+                }).then(()=> {
+                    fetchProfile();
+                    message.success(
+                        "Status changed successfully"
+                    )
+                }).catch(()=> {
+                    message.success(
+                        "Status changed successfully"
+                    )
+                })
+            }
+        }
+
         const editProfile = async () => {
             loading.value = true;
             const data = await store.dispatch('editProfile', {
@@ -228,7 +279,7 @@ export default defineComponent({
                 birth_date: profile.value.birth_date,
                 course_of_study: profile.value.course_of_study,
                 language: currentLang.value,
-                picture_url: ''
+                picture_url: profile.value.picture_url
             })
             profile.value = {
                 ...data[0]
@@ -239,13 +290,39 @@ export default defineComponent({
         const fetchProfile = async () => {
             const data = await store.dispatch('dashboard');
             profile.value = {
-                ...data[0]
+                ...data[0],
+                birth_date: data[0].birth_date
+                
             }
 
             usercard.value = {
                 username: data[0].username,
-				role: data[0].is_advisor
+				role: data[0].is_advisor,
+                picture_url: data[0].photo
             }            
+        }
+
+        const changePassword = () => {
+            store.dispatch('changePassword', password.value).then(({ data })=> {
+                if (data.status === 'error') {
+                    message.error(
+                        data.error,
+                        { duration: 5000 }
+                    )
+                    return;
+                } else{
+                    password.value = {
+                        old_password: '',
+                        new_password1: '',
+                        new_password2: ''
+                    }
+                    
+                    message.success(
+                    data.success,
+                    { duration: 5000 }
+                )
+                }
+            })
         }
 
         onMounted(()=>{
@@ -259,7 +336,10 @@ export default defineComponent({
             editProfile,
             loading,
             usercard,
-            currentLang
+            currentLang,
+            password,
+            changePassword,
+            handleAvatar
         }
     },
 })

@@ -2,7 +2,7 @@
   <div class="user-card">
     <div class="user-card__item">
       <img
-        src="https://www.google.com/url?sa=i&url=http%3A%2F%2Fyarmama.com%2Fload%2Furl%3Dhttp%3A%2Far.javamem.com%2Fpictures%2Fblank-facebook-profile&psig=AOvVaw3WMpMLOCrsNWXTCz7XAakY&ust=1673773160617000&source=images&cd=vfe&ved=0CBAQjRxqFwoTCOCvwYfZxvwCFQAAAAAdAAAAABAJ"
+        :src="user.picture_url"
         alt=""
         class="user-card__avatar"
       >

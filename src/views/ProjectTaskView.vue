@@ -1,168 +1,248 @@
 <template>
-<div class="page">
+  <div class="page">
     <div class="page__inner">
-      <div class="page__title">Project Math</div>
+      <div class="page__title">
+        {{ tasks.project }}
+      </div>
       <div class="page__body">
+        <loader v-if="loader" />
         <div class="project-task">
-            <div class="project-task__breadcrumb">
-                <n-space justify="space-between">
-                    <n-breadcrumb separator=">">
-                        <n-breadcrumb-item>Projects</n-breadcrumb-item>
-                        <n-breadcrumb-item>Project Math</n-breadcrumb-item>
-                    </n-breadcrumb>
-                    <n-button 
-                        type="primary"
-                        @click="openModal"
-                    >
-                        Create task
-                    </n-button>
-                </n-space>                
-            </div>
-            <div class="project-task__body">
-                <div class="kanban">
-                    <div class="kanban__block">
-                        <div class="kanban__header">
-                            <div class="kanban__block-title">
-                                To do
-                            </div>
-                        </div>
-                        <div class="kanban__body">
-                            <draggable class="list-group" v-model="list1" group="people" item-key="id">
-                                <template #item="{element}">
-                                    <assignment-card 
-                                        :title="element.title"
-                                        :description="element.date"
-                                    />
-                                </template>
-                            </draggable>
-                        </div>
-                    </div>
-                    <div class="kanban__block">
-                        <div class="kanban__header">
-                            <div class="kanban__block-title">
-                                In Progress
-                            </div>
-                        </div>
-                        <div class="kanban__body">
-                            <draggable class="list-group" v-model="list2" group="people" item-key="id">
-                                <template #item="{element}">
-                                    <assignment-card 
-                                        :title="element.title"
-                                        :description="element.date"
-                                    />
-                                </template>
-                            </draggable>
-                        </div>
-                    </div>
-                    <div class="kanban__block">
-                        <div class="kanban__header">
-                            <div class="kanban__block-title">
-                                Done
-                            </div>
-                        </div>
-                        <div class="kanban__body">
-                            <draggable class="list-group" v-model="list3" group="people" item-key="id">
-                                <template #item="{element}">
-                                    <assignment-card 
-                                        :title="element.title"
-                                        :description="element.date"
-                                    />
-                                </template>
-                            </draggable>
-                        </div>
-                    </div>
+          <div class="project-task__breadcrumb">
+            <n-space justify="space-between">
+              <n-breadcrumb separator=">">
+                <n-breadcrumb-item>Projects</n-breadcrumb-item>
+                <n-breadcrumb-item>{{ tasks.project }}</n-breadcrumb-item>
+              </n-breadcrumb>
+              <n-button 
+                type="primary"
+                @click="createTask"
+              >
+                Create task
+              </n-button>
+            </n-space>                
+          </div>
+          <div class="project-task__body">
+            <div class="kanban">
+              <div class="kanban__block">
+                <div class="kanban__header">
+                  <div class="kanban__block-title">
+                    To do
+                  </div>
                 </div>
+                <div class="kanban__body">
+                  <draggable
+                    v-model="tasks.to_do"
+                    class="list-group"
+                    group="people"
+                    item-key="id"
+                    @change="changeStatus($event, 'todo')"
+                  >
+                    <template #item="{element}">
+                      <assignment-card 
+                        :task="element"
+                        @click="openTask(element)"
+                      />
+                    </template>
+                  </draggable>
+                </div>
+              </div>
+              <div class="kanban__block">
+                <div class="kanban__header">
+                  <div class="kanban__block-title">
+                    In Progress
+                  </div>
+                </div>
+                <div class="kanban__body">
+                  <draggable
+                    v-model="tasks.in_progress"
+                    class="list-group"
+                    group="people"
+                    @change="changeStatus($event, 'inProgress')"
+                    item-key="id"
+                  >
+                    <template #item="{element}">
+                      <assignment-card 
+                        :task="element"
+                      />
+                    </template>
+                  </draggable>
+                </div>
+              </div>
+              <div class="kanban__block">
+                <div class="kanban__header">
+                  <div class="kanban__block-title">
+                    Done
+                  </div>
+                </div>
+                <div class="kanban__body">
+                  <draggable
+                    v-model="tasks.done"
+                    class="list-group"
+                    group="people"
+                    item-key="id"
+                    @change="changeStatus($event, 'done')"
+                  >
+                    <template #item="{element}">
+                      <assignment-card
+                        :task="element"
+                      />
+                    </template>
+                  </draggable>
+                </div>
+              </div>
             </div>
-            <n-modal 
-                v-model:show="showModal"
-                :mask-closable="false"
-            >
-                <task-card />
-            </n-modal>
+          </div>
+          <n-modal 
+            v-model:show="showModal"
+            :mask-closable="false"
+          >
+            <task-card :task="currentTask" :type="taskType"/>
+          </n-modal>
         </div>
       </div>
     </div>
-</div>
+  </div>
 </template>
 <script lang="ts">
-import Draggable from 'vuedraggable'
+import Draggable from 'vuedraggable'  
 
-
-import { NBreadcrumb, NBreadcrumbItem, NButton, NSpace, NModal } from 'naive-ui'
-import { defineComponent, ref } from 'vue'
+import { NBreadcrumb, NBreadcrumbItem, NButton, NSpace, NModal, useMessage } from 'naive-ui'
+import { defineComponent, onMounted, ref } from 'vue'
 
 import TaskCard from '@/components/TaskCard.vue';
 import AssignmentCard from '@/components/AssignmentCard.vue';
+import Loader from '@/components/UI/Loader.vue';
+import { request } from '@/api/request';
+import { useRouter, useRoute } from 'vue-router';
+import { useStore } from 'vuex';
 
 export default defineComponent({
-    components: {
-        NBreadcrumb,
-        NBreadcrumbItem,
-        AssignmentCard,
-        NButton,
-        NSpace,
-        Draggable,
-        NModal,
-        TaskCard
-    },
-    setup() {
-        const showModal = ref(true);
-        const list1: any = ref([
-            {
-                id: 1,
-                title: 'Do assignment 1',
-                date: 'Friday, 12 November, 2021'
-            },
-            {
-                id: 2,
-                title: 'Do assignment 2',
-                date: 'Friday, 12 November, 2021'
-            }
-        ])
+	components: {
+		NBreadcrumb,
+		NBreadcrumbItem,
+		AssignmentCard,
+		NButton,
+		NSpace,
+		Draggable,
+		NModal,
+		TaskCard,
+		Loader,
+	},
+	setup() {
+		const showModal = ref(false);
+		const router = useRouter();
+		const route = useRoute();
+		const loader = ref(true)
+    const store = useStore();
+    const message = useMessage()
 
-        const list2: any = ref([
-            {
-                id: 1,
-                title: 'Do assignment 1',
-                date: 'Friday, 12 November, 2021'
-            },
-            {
-                id: 2,
-                title: 'Do assignment 2',
-                date: 'Friday, 12 November, 2021'
-            }
-        ])
+		const tasks = ref({
+			project: '',
+			done: [],
+			in_progress: [],
+			to_do:[]
+		})
 
-        const list3: any = ref([
-            {
-                id: 1,
-                title: 'Do assignment 1',
-                date: 'Friday, 12 November, 2021'
-            },
-            {
-                id: 2,
-                title: 'Do assignment 2',
-                date: 'Friday, 12 November, 2021'
-            }
-        ])
+    const taskType= ref<'NEW' | 'EDIT' >('NEW') 
 
-        const log = (evt: Event) =>  {
-            window.console.log(evt);
+    const currentTask = ref({});
+
+    const changeStatus = async (evt: any, status: string) => {
+      
+      const { added } = evt
+      if (added) {
+        let id: number | null = null;
+
+        if (status === 'todo') {
+          id = 1
         }
 
-        const openModal = () => {
-            showModal.value = !showModal.value
+        if (status === 'inProgress') {
+          id = 2
         }
 
-        return {
-            list1,
-            list2,
-            list3,
-            log,
-            showModal,
-            openModal
+        if (status === 'done') {
+          id = 3
         }
-    },
+        const { element } = added;
+        const data = {
+          ...element, 
+          status: id, 
+          task_id: element.id, 
+          ...(element.assigned_to.length && {assigned_to: element.assigned_to.map((item: any) => item.id)})
+        };
+
+        try {
+          await request({ method: 'post', url: 'tasks/edit/', data})
+          await updateTask()
+          message.success(
+            "Photo uploaded successfully"
+          )
+        } catch (error) {
+          message.error(
+            "Something went wrong please try again"
+          )
+        }
+      }  
+    }
+
+		const createTask = () => {
+      currentTask.value = {};
+      store.commit('SET_CURRENTTASK', {type: 'EDIT'})
+			showModal.value = !showModal.value;
+		}
+
+    const openTask = (task: object) => {
+      currentTask.value = { type: 'EDIT', ...task };
+      store.commit('SET_CURRENTTASK', {...task, type: 'EDIT', })
+			showModal.value = !showModal.value;
+    }
+
+    const updateTask = async () => {
+			const { id } = route.query
+      
+      const res = await request({
+        method: 'get', url: 'projects/details/', params: {
+          project_id: id
+        }
+      });
+
+      tasks.value={
+        ...res.data
+      };
+    }
+
+    const fetchTask = () => {
+			const { id } = route.query
+      
+			request({ method: 'get', url: 'projects/details/', params: {
+				project_id: id
+			} }).then(res => {
+				tasks.value = {
+					...res.data
+				}
+			}).finally(()=> {
+				loader.value = false;
+			})
+		}
+
+
+		onMounted(()=> {
+			fetchTask();
+		})
+        
+
+		return {
+			showModal,
+			createTask,
+			tasks,
+			loader,
+      openTask,
+      currentTask,
+      taskType,
+      changeStatus
+		}
+	},
 })
 </script>
 <style lang="scss" scoped>

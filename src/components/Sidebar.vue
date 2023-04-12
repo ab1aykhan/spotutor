@@ -5,7 +5,7 @@
             <logo />
         </div>
         <div class="sidebar__usercard">
-            <user-card />
+            <user-card :user="currentUser"/>
         </div>
         <div class="sidebar__menu">
             <n-menu :options="menuOptions"/>
@@ -14,13 +14,14 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent, onMounted, ref } from 'vue'
 import Logo from './Logo.vue'
 import UserCard from './UserCard.vue'
 import { NIcon, NMenu } from 'naive-ui'
 import { h, Component } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { MenuOption } from 'naive-ui'
+import { useStore } from 'vuex';
 
 import Dashboard from '@/assets/icons/Dashboard.vue'
 import Recommendation from '@/assets/icons/Recommendation.vue'
@@ -38,6 +39,14 @@ export default defineComponent({
     const renderIcon = (icon: Component) => {
       return () => h(NIcon, null, { default: () => h(icon) })
     }
+    const defaultAvatar = require('@/assets/img/student.png');
+    const store = useStore()
+    const currentUser = ref({
+        username: 'Kamila Abylay',
+			  role: 'Student',
+        picture_url: ''
+    });
+
     const menuOptions: MenuOption[] = [
       {
         label: () =>
@@ -117,8 +126,22 @@ export default defineComponent({
       },
     ]
 
+    const fetchProfile = async () => {
+      const data = await store.dispatch('dashboard');
+      currentUser.value = {
+        username: data[0].username,
+        role: data[0].is_advisor,
+        picture_url: data.picture_url ? data.picture_url : defaultAvatar 
+      }
+    }
+
+    onMounted(()=>{
+      fetchProfile();
+    })
+
     return {
-      menuOptions
+      menuOptions,
+      currentUser
     }
   },
 })

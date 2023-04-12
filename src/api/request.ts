@@ -14,9 +14,10 @@ axios.interceptors.response.use((response) => {
     const { status } = error.response;
     console.log(status);
     
-    if (status === 401) {
-        router.push('/')
-    }
+    // if (status === 401) {
+    //     router.push('/')
+    // }
+    throw error;
 });
 
 export const request = (params: any) => {

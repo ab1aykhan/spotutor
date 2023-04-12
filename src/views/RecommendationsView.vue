@@ -1,11 +1,14 @@
 <template>
 <div class="page">
   <div class="page__inner">
-    <div class="page__title">Recommendations</div>
+    <div class="page__header">
+      <div class="page__title">Recommendations</div>
+    </div>
     <div class="page__body">
-      <div class="recommendations">
+      <loader v-if="loader" />
+      <div class="recommendations" v-else>
         <div class="recommendations__search-bar">
-          <div>There are over 300 supervisors!</div>
+          <!-- <div>There are over 300 supervisors!</div> -->
           <div >
             <n-input-group>
               <n-input :style="{ width: '50%' }" />
@@ -19,8 +22,13 @@
           <n-list 
             :show-divider="false"
             style="width: 60%"
+            clickable
           >
-            <n-list-item>
+            <n-list-item
+              v-for="(user) in userList"
+              :key="user.id"
+              @click="getUser(user)"
+            >
               <n-card size="small">
                 <div class="user-info">
                   <div class="user-info__person">
@@ -30,13 +38,13 @@
                       src="https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg"
                       class="user-info__avatar"
                     />
-                    <div>Akyl Bazarbay</div>
+                    <div>{{ user.username }}</div>
                   </div>
                   <div class="user-info__faculty">
-                    Computer Science
+                    {{ user.year_of_study }}
                   </div>
                   <div>
-                    <n-button quaternary circle>
+                    <!-- <n-button quaternary circle>
                       <template #icon>
                         <n-icon><heart-icon /></n-icon>
                      </template>
@@ -45,7 +53,7 @@
                       <template #icon>
                         <n-icon><paper-plane-icon /></n-icon>
                      </template>
-                    </n-button>
+                    </n-button> -->
                   </div>
                 </div>
               </n-card>
@@ -58,7 +66,7 @@
 </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts">
 import { 
   NList, 
   NListItem, 
@@ -71,8 +79,57 @@ import {
   NInputGroup
 } from 'naive-ui';
 
+import Loader from '@/components/UI/Loader.vue';
+
 import { HeartOutline as HeartIcon, PaperPlaneOutline as PaperPlaneIcon  } from '@vicons/ionicons5';
 
+import { defineComponent, onMounted, ref } from 'vue'
+import { request } from '@/api/request';
+
+export default defineComponent({
+  components: {
+    NList, 
+    NListItem, 
+    NCard, 
+    NSpace,
+    NAvatar,
+    NIcon,
+    NButton,
+    NInput,
+    NInputGroup,
+    HeartIcon,
+    PaperPlaneIcon,
+    Loader
+  },
+
+  setup() {
+      const userList = ref<any>([]);
+  		const loader = ref(true)
+
+
+      const fetchRecommendation = async () => {
+  			loader.value = true;
+        const { data } = await request({method: 'get', url: 'recommendation/'});
+        userList.value = data;
+  			loader.value = false;
+      }
+
+      const getUser = async (user: any) => {
+        const { id } = user;
+        await request({method: 'get', url: `profile/get_student/?id=${id}`})
+      }
+
+      onMounted(()=> {
+        fetchRecommendation();
+      })
+
+      return{
+        userList,
+        loader,
+        getUser
+      }
+  },
+})
 </script>
 
 <style lang="scss" scoped>

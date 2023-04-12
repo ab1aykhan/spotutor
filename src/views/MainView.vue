@@ -39,7 +39,7 @@ export default {
         height: 100%;
     }
     &__sidebar{
-        flex: 2;
+        flex: 3;
     }
     &__body{
         flex: 13;

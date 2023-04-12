@@ -19,7 +19,7 @@
           preset="dialog"
           class="projects__modal"
         >
-          <create-project-form />
+          <create-project-form @projectCreate="projectCreate"/>
         </n-modal>
         <div class="projects">
           <div class="projects__nav">
@@ -36,6 +36,8 @@
                     v-for="(i, index) in projects"
                     :key="index"
                     :project="i"
+                    @click="toProject(i)"
+                    style="max-width: 358px; width:100%"
                   />
                 </div>
               </n-tab-pane>
@@ -66,6 +68,8 @@ import ProjectCard from '@/components/ProjectCard.vue';
 import { NTabs, NTabPane, NButton, NModal } from 'naive-ui'
 import { computed, defineComponent, onBeforeMount, ref } from 'vue'
 import { useStore } from 'vuex';
+import { useRouter } from 'vue-router';
+
 export default defineComponent({
 	components: {
 		NTabs,
@@ -79,17 +83,32 @@ export default defineComponent({
 		const loader = ref(true)
 		const store = useStore();
 		const isOpen = ref(false);
+		const router = useRouter();
 
 		const projects = computed(()=> store.getters.myProjects)
 		
 		const showModal = () => {      
 			isOpen.value = !isOpen.value
 		}
-		onBeforeMount(()=> {
+
+    const toProject = (item: any) => {
+      router.push({name: 'tasks', query: item })
+		}
+
+    const projectCreate = () => {
+			isOpen.value = false;
+      fetchProjects()
+    }
+
+    const fetchProjects = () => {
 			loader.value = true;
 			store.dispatch('myProjects').finally(()=>{
 				loader.value = false;
 			})
+    }
+    
+		onBeforeMount(()=> {
+      fetchProjects();
 		});
 
 
@@ -97,7 +116,9 @@ export default defineComponent({
 		return {
 			projects,
 			isOpen,
-			showModal
+			showModal,
+      toProject,
+      projectCreate
 		}
 	},
 })
