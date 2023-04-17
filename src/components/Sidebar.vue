@@ -10,6 +10,9 @@
         <div class="sidebar__menu">
             <n-menu :options="menuOptions"/>
         </div>
+        <div class="sidebar__logout">
+          <n-button style="width: 100%" quaternary @click="logOut">Log out</n-button>
+        </div>
     </div>
   </div>
 </template>
@@ -17,7 +20,7 @@
 import { defineComponent, onMounted, ref } from 'vue'
 import Logo from './Logo.vue'
 import UserCard from './UserCard.vue'
-import { NIcon, NMenu } from 'naive-ui'
+import { NIcon, NMenu, NButton } from 'naive-ui'
 import { h, Component } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { MenuOption } from 'naive-ui'
@@ -28,12 +31,15 @@ import Recommendation from '@/assets/icons/Recommendation.vue'
 import Analytics from '@/assets/icons/Analytics.vue'
 import Projects from '@/assets/icons/Projects.vue'
 import Profile from '@/assets/icons/Profile.vue'
+import { request } from '@/api/request'
+import router from '@/router'
 
 export default defineComponent({
   components: {
     Logo,
     UserCard,
-    NMenu
+    NMenu,
+    NButton
   },
   setup() {
     const renderIcon = (icon: Component) => {
@@ -135,13 +141,23 @@ export default defineComponent({
       }
     }
 
+    const logOut = () => {
+      request({ method: 'post', url: 'logout/', data: { 'refresh': localStorage.getItem('refresh')}})
+      .then(()=> {
+        router.push('/');
+        localStorage.clear();
+      })
+      .catch(()=>{})
+    }
+
     onMounted(()=>{
       fetchProfile();
     })
 
     return {
       menuOptions,
-      currentUser
+      currentUser,
+      logOut
     }
   },
 })
@@ -162,6 +178,9 @@ export default defineComponent({
     }
     &__menu{
       margin-top: 50px;
+    }
+    &__logout{
+      margin-top: auto;
     }
 
 }

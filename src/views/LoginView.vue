@@ -21,6 +21,7 @@
               v-model:value="loginForm.password" 
               placeholder="Password"
               size="large"
+              type="password"
             />
           </div>
           <div class="login-form__forget-password login-form__item">
@@ -110,6 +111,7 @@ export default defineComponent({
 					}
 				}).then(({ data }) => {
 					localStorage.setItem('token', data.access);
+					localStorage.setItem('refresh', data.refresh);
 					router.push({ name: 'main'});
 				}).finally(()=> {
           loading.value = false;
